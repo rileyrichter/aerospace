@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# record-mode [on|off|toggle] [WIDTHxHEIGHT]
+#
+# Pillarboxes AeroSpace's tiling area to a centered 16:9 box by setting the outer
+# gaps, so screen recordings frame cleanly. One window fills the box; several still
+# tile, just inside it. Default 1920x1080 = pixel-perfect 1080p capture, no rescale.
+#
+# ponytail: gaps are global, so this sizes to the main display only. Multi-monitor
+# would need per-monitor gap lists.
+set -euo pipefail
+
+config=$(readlink -f "$HOME/.aerospace.toml")   # edit the repo file, not the symlink
+size=${2:-1920x1080}
+current=$(sed -n 's|^gaps\.outer\.left *= *||p' "$config" | tr -d ' ')
+
+case ${1:-toggle} in
+  on)     want=on ;;
+  off)    want=off ;;
+  toggle) if [ "$current" = 0 ]; then want=on; else want=off; fi ;;
+  *)      echo "usage: record-mode [on|off|toggle] [WIDTHxHEIGHT]" >&2; exit 2 ;;
+esac
+
+if [ "$want" = off ]; then
+  side=0 vert=0
+else
+  # visibleFrame, not frame: the menu bar is not part of the tiling area
+  read -r sw sh <<<"$(osascript -l JavaScript -e 'ObjC.import("AppKit");var f=$.NSScreen.mainScreen.visibleFrame;`${Math.round(f.size.width)} ${Math.round(f.size.height)}`')"
+  w=${size%x*} h=${size#*x}
+  side=$(( (sw - w) / 2 )) vert=$(( (sh - h) / 2 ))
+  if [ "$side" -lt 0 ] || [ "$vert" -lt 0 ]; then
+    echo "record-mode: ${size} does not fit in ${sw}x${sh}" >&2; exit 1
+  fi
+fi
+
+# '#' delimiter, not '|': the alternations below are regex, not separators
+sed -i '' -E \
+  -e "s#^(gaps\.outer\.(left|right)) *=.*#\1 = $side#" \
+  -e "s#^(gaps\.outer\.(top|bottom)) *=.*#\1 = $vert#" \
+  "$config"
+aerospace reload-config
+echo "record-mode $want (${size} box, side gap $side, top/bottom gap $vert)"

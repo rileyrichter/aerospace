@@ -30,6 +30,7 @@ repeatedly without dropping out, and `esc` leaves. The border stays amber throug
 |---|---|---|
 | `.aerospace.toml` | `~/.aerospace.toml` | The working AeroSpace config — sticky service mode + mode indicator |
 | `bordersrc` | `~/.config/borders/bordersrc` | JankyBorders startup defaults (width, style, colors) |
+| `record-mode` | — | Script: pillarbox the tiling area to a 16:9 box for screen recording |
 | `README.md` | — | This guide |
 | `default-config.toml` | — | Pristine stock AeroSpace config, kept for reference only. **Not** the one to link — diff against it to see what this setup changes |
 
@@ -205,6 +206,7 @@ cyan values in sync.
     r = ['flatten-workspace-tree', 'mode main']
     f = ['layout floating tiling', 'mode main']
     backspace = ['close-all-windows-but-current', 'mode main']
+    c = ['exec-and-forget $HOME/code/aerospace-setup/record-mode toggle', 'mode main']
 
     alt-shift-h = 'join-with left'
     alt-shift-j = 'join-with down'
@@ -261,6 +263,39 @@ Notes:
 
 ---
 
+## Recording box (16:9)
+
+For Looms and Zoom shares. `alt+shift+;` then **`c`** toggles a centered 16:9 box: the outer
+gaps grow until the tiling area *is* the box. One window fills it; open a second and they
+tile — inside the box, not across the whole display. `c` again restores full width.
+
+```bash
+record-mode                 # toggle, 1920x1080
+record-mode on 2496x1404    # explicit size
+record-mode off
+```
+
+Default is **1920x1080** — captured 1:1 with no rescaling, which is the sharpest a Loom
+gets. `2496x1404` is the largest exact 16:9 that fits this display and still downscales to
+1080p by a clean 1.3x if you want more room.
+
+Sizes are computed from `NSScreen.visibleFrame`, not the raw resolution, so the menu bar is
+accounted for. On the C49RG9 (5120x1440, 30pt menu bar → 5120x1410 usable) a 1080p box
+lands at side gaps 1600, top/bottom 165.
+
+Why gaps and not window geometry: AeroSpace has no absolute move/resize — `move` and
+`resize` are relative, and there is no "set this window to 1920x1080 at x,y". Gaps are the
+only lever that produces a fixed rectangle, and they get tiling inside the box for free.
+
+Two things to know:
+
+- The script rewrites `gaps.outer.*` in `.aerospace.toml` and reloads, so **the repo is
+  dirty while the box is on.** Toggle off before committing, or `git checkout .aerospace.toml`.
+- Gaps are global — every workspace is boxed, and on a multi-monitor setup the size is
+  computed from the main display only.
+
+---
+
 ## Troubleshooting
 
 | Symptom | Cause / fix |
@@ -273,6 +308,8 @@ Notes:
 | Config edits don't stick | A symlink was replaced by a regular file. Check `ls -l`; re-create with `ln -sf` |
 | Linked the wrong config | `default-config.toml` is the stock file with no fixes. `~/.aerospace.toml` must point at `.aerospace.toml` |
 | `borders not found` after install | Shell PATH is stale. Open a new shell, or `eval "$(brew shellenv)"` |
+| Stuck in the 16:9 box | `record-mode off`. If the script is gone, set the four `gaps.outer.*` back to `0` and `aerospace reload-config` |
+| `record-mode` does nothing | It must be executable and at `~/code/aerospace-setup/record-mode` — that path is baked into the `c` binding |
 
 ## References
 
