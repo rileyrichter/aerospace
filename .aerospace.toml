@@ -223,3 +223,9 @@ gaps.outer.right = 0
     alt-shift-j = 'join-with down'
     alt-shift-k = 'join-with up'
     alt-shift-l = 'join-with right'
+
+# Force Zoom to always float, never tile
+# See: https://nikitabobko.github.io/AeroSpace/guide#on-window-detected-callback
+[[on-window-detected]]
+if.app-id = 'us.zoom.xos'
+run = 'layout floating'
