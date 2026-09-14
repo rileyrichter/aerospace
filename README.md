@@ -37,6 +37,26 @@ repeatedly without dropping out, and `esc` leaves. The border stays amber throug
 The two linked files are symlinked out of this repo, so you edit them at their normal
 `~` paths and git sees the changes.
 
+### Both machines share this config
+
+There is no per-machine config and no second branch. Both Macs clone this repo and symlink
+the same `.aerospace.toml` — the two things that could differ take care of themselves:
+
+- **Screen size.** `record-mode` measures the display at runtime, so the same binding gives
+  a 1920x1080 box on the C49RG9 and a 1504x846 one on a laptop. Nothing to configure.
+- **Homebrew prefix.** The config hardcodes `/opt/homebrew/bin/...`. Apple Silicon needs
+  nothing; an Intel Mac needs the `sed` in step 3 — and that rewrite must not be committed.
+
+Pull changes on the other machine with:
+
+```bash
+git -C ~/code/aerospace-setup pull && aerospace reload-config
+```
+
+The one thing that does travel badly is a committed recording box: `record-mode` edits
+`gaps.outer.*`, so toggle it **off** before committing or the other machine pulls a
+pillarboxed screen.
+
 ---
 
 ## Setting up a new machine
@@ -147,6 +167,9 @@ aerospace config --config-path                        # ~/.aerospace.toml
 brew services list | grep borders                     # started
 pgrep -lf borders                                     # one process
 ls -l ~/.aerospace.toml ~/.config/borders/bordersrc   # both symlinks into the repo
+
+# record-mode picks a real 16:9 box on a laptop-sized screen (dry run, writes nothing)
+RECORD_MODE_SCREEN=1512x982 ~/code/aerospace-setup/record-mode on   # -> 1504x846
 
 # Mode switching drives the right color
 aerospace mode service; sleep 1; aerospace list-modes --current   # service
@@ -276,8 +299,10 @@ record-mode off
 ```
 
 Default is **1920x1080** — captured 1:1 with no rescaling, which is the sharpest a Loom
-gets. `2496x1404` is the largest exact 16:9 that fits this display and still downscales to
-1080p by a clean 1.3x if you want more room.
+gets. Where 1080p doesn't fit — any laptop display, whose *point* size is well under 1920
+wide — it falls back to the largest exact 16:9 that does (14" MBP: 1504x846). An explicit
+size that doesn't fit is an error, not a fallback. `2496x1404` is the largest exact 16:9 on
+the C49RG9 and still downscales to 1080p by a clean 1.3x if you want more room.
 
 Sizes are computed from `NSScreen.visibleFrame`, not the raw resolution, so the menu bar is
 accounted for. On the C49RG9 (5120x1440, 30pt menu bar → 5120x1410 usable) a 1080p box

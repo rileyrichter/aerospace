@@ -10,7 +10,7 @@
 set -euo pipefail
 
 config=$(readlink -f "$HOME/.aerospace.toml")   # edit the repo file, not the symlink
-size=${2:-1920x1080}
+size=${2:-}            # empty = 1920x1080 if it fits, else the largest 16:9 that does
 current=$(sed -n 's|^gaps\.outer\.left *= *||p' "$config" | tr -d ' ')
 
 case ${1:-toggle} in
@@ -24,18 +24,38 @@ if [ "$want" = off ]; then
   side=0 vert=0
 else
   # visibleFrame, not frame: the menu bar is not part of the tiling area
-  read -r sw sh <<<"$(osascript -l JavaScript -e 'ObjC.import("AppKit");var f=$.NSScreen.mainScreen.visibleFrame;`${Math.round(f.size.width)} ${Math.round(f.size.height)}`')"
-  w=${size%x*} h=${size#*x}
-  side=$(( (sw - w) / 2 )) vert=$(( (sh - h) / 2 ))
-  if [ "$side" -lt 0 ] || [ "$vert" -lt 0 ]; then
-    echo "record-mode: ${size} does not fit in ${sw}x${sh}" >&2; exit 1
+  # RECORD_MODE_SCREEN=1512x982 fakes a display and makes this a dry run — the only way
+  # to check the small-screen branch from a 5120px monitor. See README verification.
+  if [ -n "${RECORD_MODE_SCREEN:-}" ]; then
+    sw=${RECORD_MODE_SCREEN%x*} sh=${RECORD_MODE_SCREEN#*x}
+  else
+    read -r sw sh <<<"$(osascript -l JavaScript -e 'ObjC.import("AppKit");var f=$.NSScreen.mainScreen.visibleFrame;`${Math.round(f.size.width)} ${Math.round(f.size.height)}`')"
   fi
+  if [ -n "$size" ]; then w=${size%x*} h=${size#*x}; else w=1920 h=1080; fi
+
+  if [ "$w" -gt "$sw" ] || [ "$h" -gt "$sh" ]; then
+    [ -n "$size" ] && { echo "record-mode: ${size} does not fit in ${sw}x${sh}" >&2; exit 1; }
+    # laptop screens are smaller than 1080p in points: fall back to the largest exact 16:9
+    u=$(( sw / 16 )); [ $(( sh / 9 )) -lt "$u" ] && u=$(( sh / 9 ))
+    w=$(( u * 16 )) h=$(( u * 9 ))
+  fi
+  size=${w}x${h}
+  side=$(( (sw - w) / 2 )) vert=$(( (sh - h) / 2 ))
 fi
 
 # '#' delimiter, not '|': the alternations below are regex, not separators
+if [ -n "${RECORD_MODE_SCREEN:-}" ]; then
+  echo "record-mode (dry run, ${sw}x${sh} screen): $want ${size:-} side $side top/bottom $vert"
+  exit 0
+fi
+
 sed -i '' -E \
   -e "s#^(gaps\.outer\.(left|right)) *=.*#\1 = $side#" \
   -e "s#^(gaps\.outer\.(top|bottom)) *=.*#\1 = $vert#" \
   "$config"
 aerospace reload-config
-echo "record-mode $want (${size} box, side gap $side, top/bottom gap $vert)"
+if [ "$want" = off ]; then
+  echo "record-mode off (full screen)"
+else
+  echo "record-mode on (${size} box, side gap $side, top/bottom gap $vert)"
+fi
