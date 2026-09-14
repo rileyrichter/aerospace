@@ -11,11 +11,11 @@ config-version = 2
 after-startup-command = []
 
 # Start AeroSpace at login
-start-at-login = false
+start-at-login = true
 
 # Automatically reload the config when the config file is saved
 # After setting this to true, reload once manually to start the auto-reloading
-auto-reload-config = false
+auto-reload-config = true
 
 # Normalizations. See: https://nikitabobko.github.io/AeroSpace/guide#normalization
 enable-normalization-flatten-containers = true
@@ -74,8 +74,8 @@ key-mapping.preset = 'qwerty'
 #                 Monitor pattern is the same as for 'workspace-to-monitor-force-assignment'.
 #                 See:
 #                 https://nikitabobko.github.io/AeroSpace/guide#assign-workspaces-to-monitors
-gaps.inner.horizontal = 0
-gaps.inner.vertical =   0
+gaps.inner.horizontal = 10
+gaps.inner.vertical =   10
 gaps.outer.left = 0
 gaps.outer.bottom = 0
 gaps.outer.top = 0
@@ -228,4 +228,9 @@ gaps.outer.right = 0
 # See: https://nikitabobko.github.io/AeroSpace/guide#on-window-detected-callback
 [[on-window-detected]]
 if.app-id = 'us.zoom.xos'
+run = 'layout floating'
+
+# Force 1Password to always float, never tile
+[[on-window-detected]]
+if.app-id = 'com.1password.1password'
 run = 'layout floating'

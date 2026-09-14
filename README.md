@@ -248,7 +248,10 @@ with a neighbor.
 
 Not in the config yet — this is the one idea worth taking from
 [Josean's AeroSpace guide](https://www.josean.com/posts/how-to-setup-aerospace-tiling-window-manager).
-Deliberately **not** taking his gaps (this setup runs zero-gap) or his trimmed workspace list.
+Deliberately **not** taking his gaps or his trimmed workspace list — this setup uses inner
+gaps only (`gaps.inner.horizontal`/`gaps.inner.vertical` = `10`, space between tiled windows)
+and stays zero on the outer edges (`gaps.outer.*` = `0`, the screen border), which is what
+`record-mode` manipulates.
 
 `on-window-detected` fires once per new window and can route it to a fixed workspace, so an
 app always opens where you expect it:
