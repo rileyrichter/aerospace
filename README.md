@@ -219,6 +219,48 @@ with a neighbor.
 
 ---
 
+## Pinning apps to workspaces
+
+Not in the config yet — this is the one idea worth taking from
+[Josean's AeroSpace guide](https://www.josean.com/posts/how-to-setup-aerospace-tiling-window-manager).
+Deliberately **not** taking his gaps (this setup runs zero-gap) or his trimmed workspace list.
+
+`on-window-detected` fires once per new window and can route it to a fixed workspace, so an
+app always opens where you expect it:
+
+```toml
+[[on-window-detected]]
+if.app-id = 'com.apple.Safari'
+run = 'move-node-to-workspace B'
+
+[[on-window-detected]]
+if.app-id = 'com.googlecode.iterm2'
+run = 'move-node-to-workspace T'
+```
+
+Get the real bundle IDs from the apps you actually run — don't guess them:
+
+```bash
+aerospace list-apps        # middle column is the bundle ID
+```
+
+Notes:
+
+- These are TOML **array-of-tables** (`[[...]]`), one block per rule. Append them at the
+  **end** of the file: a `[[table]]` header is an absolute path, so it stays top-level no
+  matter which `[section]` precedes it — but every key after it belongs to it, so dropping
+  one into the middle of `[mode.main.binding]` orphans the rest of that section.
+- First matching rule wins; rules are checked in file order.
+- Only applies to windows detected *after* the rule loads. `aerospace reload-config` does
+  not retroactively move windows already open.
+- The target workspace should be in `persistent-workspaces` (it already lists 1-9 and A-Z)
+  so it survives being emptied.
+- Other predicates exist — `if.app-name-regex-substring`, `if.window-title-regex-substring`,
+  `if.during-aerospace-startup` — see
+  [the guide](https://nikitabobko.github.io/AeroSpace/guide#on-window-detected-callback).
+
+---
+
 ## Troubleshooting
 
 | Symptom | Cause / fix |
@@ -236,3 +278,4 @@ with a neighbor.
 
 - AeroSpace — [repo](https://github.com/nikitabobko/AeroSpace) · [commands](https://nikitabobko.github.io/AeroSpace/commands) · [guide](https://nikitabobko.github.io/AeroSpace/guide)
 - JankyBorders — [repo](https://github.com/FelixKratz/JankyBorders) · `man borders`
+- [Josean's AeroSpace guide](https://www.josean.com/posts/how-to-setup-aerospace-tiling-window-manager) — source of the app-pinning idea; its gaps and workspace trimming are not used here
