@@ -246,7 +246,7 @@ with a neighbor.
 
 ## Pinning apps to workspaces
 
-Not in the config yet — this is the one idea worth taking from
+This is the one idea worth taking from
 [Josean's AeroSpace guide](https://www.josean.com/posts/how-to-setup-aerospace-tiling-window-manager).
 Deliberately **not** taking his gaps or his trimmed workspace list — this setup uses inner
 gaps only (`gaps.inner.horizontal`/`gaps.inner.vertical` = `10`, space between tiled windows)
@@ -254,17 +254,22 @@ and stays zero on the outer edges (`gaps.outer.*` = `0`, the screen border), whi
 `record-mode` manipulates.
 
 `on-window-detected` fires once per new window and can route it to a fixed workspace, so an
-app always opens where you expect it:
+app opens where you expect it. But it fires on **every** new window of that app — a blanket
+rule would also drag a second window of the same app to the pinned space, which gets in the
+way when you deliberately want, say, a second Chrome window on another space. Adding
+`if.during-aerospace-startup = true` scopes the rule to windows AeroSpace discovers at its
+own startup (login/reboot) only — the app gets a home space when your session comes back up,
+but any window you open afterward is left wherever you open it:
 
 ```toml
 [[on-window-detected]]
-if.app-id = 'com.apple.Safari'
-run = 'move-node-to-workspace B'
-
-[[on-window-detected]]
 if.app-id = 'com.googlecode.iterm2'
+if.during-aerospace-startup = true
 run = 'move-node-to-workspace T'
 ```
+
+Drop the `if.during-aerospace-startup` line for an app you want pinned unconditionally,
+every time a new window opens, no exceptions.
 
 Get the real bundle IDs from the apps you actually run — don't guess them:
 
@@ -279,8 +284,9 @@ Notes:
   matter which `[section]` precedes it — but every key after it belongs to it, so dropping
   one into the middle of `[mode.main.binding]` orphans the rest of that section.
 - First matching rule wins; rules are checked in file order.
-- Only applies to windows detected *after* the rule loads. `aerospace reload-config` does
-  not retroactively move windows already open.
+- Only applies to windows detected *after* the rule loads, and startup-scoped rules only
+  fire on an actual AeroSpace startup — `aerospace reload-config` does not retroactively
+  move windows already open, and won't trigger the startup rules either.
 - The target workspace should be in `persistent-workspaces` (it already lists 1-9 and A-Z)
   so it survives being emptied.
 - Other predicates exist — `if.app-name-regex-substring`, `if.window-title-regex-substring`,
