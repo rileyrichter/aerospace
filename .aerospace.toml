@@ -240,6 +240,11 @@ run = 'layout floating'
 if.app-id = 'com.apple.finder'
 run = 'layout floating'
 
+# Force Infuse to always float, never tile
+[[on-window-detected]]
+if.app-id = 'com.firecore.infuse'
+run = 'layout floating'
+
 # Space assignments below apply only to windows AeroSpace discovers at its own
 # startup (login/reboot) — new windows opened later are left wherever you open
 # them, so a second window of the same app can live on a different space.
